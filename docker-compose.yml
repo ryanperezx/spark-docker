@@ -1,0 +1,41 @@
+services:
+  spark-master:
+    build:
+      context: ./spark-master
+    networks:
+      - spark-network
+      - kafka-network
+    ports:
+      - 8090:8090
+      - 7077:7077
+    environment:
+      - SPARK_MASTER_WEBUI_PORT=8090
+      - SPARK_MASTER=spark://spark-master:7077
+    volumes:
+      - ./spark-master/jobs:/opt/bitnami/spark/jobs
+  spark-worker-1:
+    image: bitnami/spark:3.5.2
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    networks:
+      - spark-network
+      - kafka-network
+    depends_on:
+      - spark-master
+    env_file:
+      - spark-worker/spark-worker.env
+  spark-worker-2:
+    image: bitnami/spark:3.5.2
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    networks:
+      - spark-network
+      - kafka-network
+    depends_on:
+      - spark-master
+    env_file:
+      - spark-worker/spark-worker.env
+networks:
+  spark-network:
+    name: spark-network
+    external: false
+  kafka-network:
+    external: true
